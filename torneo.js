@@ -1,5 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
     const btnSubmit = document.getElementById('btn-submit');
+    const adminLoginBtn = document.getElementById('admin-login');
+    const creatorBox = document.getElementById('creator-box');
+
+    // Lógica para mostrar panel de creador solo al admin
+    if (adminLoginBtn) {
+        adminLoginBtn.addEventListener('click', () => {
+            const pass = prompt('Ingresa la clave secreta de administrador para crear torneos:');
+            if (pass === '18072007v') {
+                creatorBox.style.display = 'block';
+                alert('¡Acceso concedido, Victor! Panel de creación habilitado.');
+            } else if (pass !== null) {
+                alert('Clave incorrecta. Solo el dueño puede crear torneos.');
+            }
+        });
+    }
 
     btnSubmit.addEventListener('click', () => {
         crearTorneo();

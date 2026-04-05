@@ -12,7 +12,7 @@
 <body>
 
     <header>
-        <div class="logo">FF MASTERS</div>
+        <div class="logo" id="admin-login" style="cursor: pointer;" title="Acceso Administrador">FF MASTERS 🔒</div>
         <nav class="user-info">TEMPORADA 2026</nav>
     </header>
 
@@ -23,7 +23,7 @@
         </section>
 
         <!-- Formulario para crear torneo -->
-        <section class="creator-box">
+        <section class="creator-box" id="creator-box" style="display: none;">
             <h2 class="section-title">CREAR NUEVA SALA</h2>
             <div class="form-grid">
                 <div class="input-group">
@@ -59,20 +59,7 @@
 
         <!-- Contenedor dinámico -->
         <div class="tournament-grid" id="tournament-list">
-            <!-- Torneo de ejemplo -->
-            <div class="tournament-card">
-                <div class="status-badge">RECLUTANDO</div>
-                <div class="card-header">FFCS</div>
-                <div class="card-body">
-                    <h3>GRAN FINAL LATAM</h3>
-                    <div class="card-info">
-                        <span>MODO: BATTLE ROYALE</span>
-                        <span>MAPA: BERMUDA</span>
-                        <span>PREMIO: $10,000 USD</span>
-                    </div>
-                    <button class="btn-action" onclick="unirse(this)">Inscribirse</button>
-                </div>
-            </div>
+            <!-- Aquí aparecerán los torneos que crees -->
         </div>
     </main>
 
