@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FF MASTERS | Tournament Hub</title>
+    <!-- Enlace al archivo CSS externo -->
+    <link rel="stylesheet" href="torneo.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">FF MASTERS</div>
+        <nav class="user-info">TEMPORADA 2026</nav>
+    </header>
+
+    <main class="container">
+        <section class="hero-section">
+            <h1>CENTRO DE TORNEOS</h1>
+            <p>Organiza tu propia batalla épica al estilo Booyah</p>
+        </section>
+
+        <!-- Formulario para crear torneo -->
+        <section class="creator-box">
+            <h2 class="section-title">CREAR NUEVA SALA</h2>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>NOMBRE DEL TORNEO</label>
+                    <input type="text" id="t-name" placeholder="Ej: Copa Diamante">
+                </div>
+                <div class="input-group">
+                    <label>MODO DE JUEGO</label>
+                    <select id="t-mode">
+                        <option value="Battle Royale">Battle Royale (Clásico)</option>
+                        <option value="Duelo de Escuadras">Duelo de Escuadras</option>
+                        <option value="Lobo Solitario">Lobo Solitario</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>MAPA PRINCIPAL</label>
+                    <select id="t-map">
+                        <option value="Bermuda">Bermuda</option>
+                        <option value="Purgatorio">Purgatorio</option>
+                        <option value="Kalahari">Kalahari</option>
+                        <option value="Alpes">Alpes</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>PREMIO (DIAMANTES O $) </label>
+                    <input type="text" id="t-prize" placeholder="Ej: 5000 Diams">
+                </div>
+                <button class="btn-create" id="btn-submit">Lanzar Torneo</button>
+            </div>
+        </section>
+
+        <h2 class="active-title">TORNEOS ACTIVOS</h2>
+
+        <!-- Contenedor dinámico -->
+        <div class="tournament-grid" id="tournament-list">
+            <!-- Torneo de ejemplo -->
+            <div class="tournament-card">
+                <div class="status-badge">RECLUTANDO</div>
+                <div class="card-header">FFCS</div>
+                <div class="card-body">
+                    <h3>GRAN FINAL LATAM</h3>
+                    <div class="card-info">
+                        <span>MODO: BATTLE ROYALE</span>
+                        <span>MAPA: BERMUDA</span>
+                        <span>PREMIO: $10,000 USD</span>
+                    </div>
+                    <button class="btn-action" onclick="unirse(this)">Inscribirse</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Inscripción -->
+    <div id="join-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" id="close-modal-btn">&times;</button>
+            <h2 class="modal-title">INSCRIPCIÓN AL TORNEO</h2>
+            <p class="modal-subtitle" id="modal-tournament-name">CARGANDO...</p>
+            
+            <div class="payment-info">
+                <h3>DATOS PARA EL PAGO</h3>
+                <p>Nequi: <span class="highlight">3226356817</span></p>
+                <p>Titular: <span class="highlight">Victor Carpintero</span></p>
+                <p>Valor de inscripción: <span class="highlight">$5.000 COP</span></p>
+            </div>
+
+            <form id="enroll-form" class="enroll-form">
+                <input type="hidden" id="f-tournament-name" name="Torneo">
+                <div class="input-group">
+                    <label>UID DE FREE FIRE (ID DE JUGADOR)</label>
+                    <input type="number" id="f-uid" name="Player_UID" placeholder="Ej: 12345678" required>
+                </div>
+                <div class="input-group">
+                    <label>NICKNAME (NOMBRE EN EL JUEGO)</label>
+                    <input type="text" id="f-nickname" name="Nickname" placeholder="Ej: PRO_K1LLER..." required>
+                </div>
+                <div class="input-group">
+                    <label>NÚMERO DE REFERENCIA NEQUI</label>
+                    <input type="text" id="f-reference" name="Referencia_Nequi" placeholder="Ej: M123456789" required>
+                </div>
+                
+                <button type="submit" class="btn-create" id="btn-confirm-enroll">CONFIRMAR INSCRIPCIÓN Y NOTIFICAR</button>
+            </form>
+            <div id="enroll-loading" style="display: none; text-align: center; color: var(--primary-yellow); margin-top: 15px;">
+                Procesando solicitud...
+            </div>
+            <div id="enroll-success" style="display: none; text-align: center; color: #00ff00; margin-top: 15px; font-weight: bold;">
+                ¡Inscripción enviada con éxito! Espera validación.
+            </div>
+        </div>
+    </div>
+
+    <!-- Enlace al archivo JavaScript externo -->
+    <script src="torneo.js"></script>
+</body>
+
+</html>
