@@ -110,6 +110,7 @@ function crearTorneo() {
     const modo = document.getElementById('t-mode').value;
     const mapa = document.getElementById('t-map').value;
     const premio = document.getElementById('t-prize').value;
+    const inscripcion = document.getElementById('t-fee') ? document.getElementById('t-fee').value : '';
     const dateInput = document.getElementById('t-date');
     const fecha = dateInput && dateInput.value ? dateInput.value : '';
 
@@ -125,12 +126,14 @@ function crearTorneo() {
         modo: modo,
         mapa: mapa,
         premio: premio,
+        inscripcion: inscripcion || 'Gratis',
         fechaTorneo: fecha,
         fechaPublicacion: new Date().toISOString()
     }).then(() => {
         alert("¡Torneo publicado en la nube con éxito!");
         document.getElementById('t-name').value = "";
         document.getElementById('t-prize').value = "";
+        if (document.getElementById('t-fee')) document.getElementById('t-fee').value = "";
         if (dateInput) dateInput.value = "";
     }).catch((error) => {
         console.error("Error al guardar:", error);
@@ -206,6 +209,7 @@ window.renderTorneos = function() {
                         <span>🎮 MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
                         <span>🗺️ MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
                         <span>🏆 PREMIO: ${t.premio || 'Sorpresa'}</span>
+                        <span>💲 INSCRIPCIÓN: ${t.inscripcion || 'Gratis'}</span>
                     </div>
                     <button class="btn-action" onclick="unirse(this)">Participar</button>
             `;

@@ -50,6 +50,10 @@
                     <label for="t-date">FECHA Y HORA</label>
                     <input type="datetime-local" id="t-date">
                 </div>
+                <div class="input-group">
+                    <label for="t-fee">VALOR INSCRIPCIÓN</label>
+                    <input type="text" id="t-fee" placeholder="Ej: $2.000 COP">
+                </div>
                 <button id="btn-submit" class="btn-create">Publicar Torneo</button>
             </div>
         </div>
@@ -68,8 +72,11 @@
             <p class="modal-subtitle" id="modal-tournament-name">Nombre del Torneo</p>
             
             <div class="payment-info">
-                <h3>⚠️ Requisitos</h3>
+                <h3>⚠️ Requisitos de Inscripción</h3>
                 <p>Asegúrate de poner bien tu <span class="highlight">ID y Nombre en el juego</span>.</p>
+                <br>
+                <p>💰 <strong>PAGO:</strong></p>
+                <p>Debes transferir el valor al número <strong>Nequi: 3226356817</strong>.</p>
             </div>
 
             <form id="enroll-form" class="enroll-form">
@@ -82,6 +89,10 @@
                 <div class="input-group">
                     <label>TU ID</label>
                     <input type="text" name="ID_Jugador" required placeholder="Ej: 123456789">
+                </div>
+                <div class="input-group">
+                    <label>NÚMERO DE NEQUI (Desde el que pagaste)</label>
+                    <input type="text" name="Nequi_Referencia" required placeholder="Ej: 3001234567">
                 </div>
                 
                 <button type="submit" id="btn-confirm-enroll" class="btn-action">Confirmar Inscripción</button>
