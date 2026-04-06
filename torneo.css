@@ -353,10 +353,12 @@ input:focus {
 /* WhatsApp Floating Button */
 .whatsapp-float {
     position: fixed;
-    width: 50px;
-    height: 50px;
-    bottom: 30px;
-    right: 30px;
+    width: 45px;
+    height: 45px;
+    top: 20px;
+    left: 20px;
+    bottom: auto;
+    right: auto;
     background-color: #25d366;
     color: #FFF;
     border-radius: 50%;
@@ -375,15 +377,17 @@ input:focus {
 }
 
 .whatsapp-icon {
-    width: 28px;
-    height: 28px;
+    width: 25px;
+    height: 25px;
 }
 
-/* Responsividad para móviles (tamaño un poco mayor para ser fácil de tocar) */
+/* Responsividad para móviles (tamaño un poco mayor para ser fácil de tocar y reposicionado a la derecha) */
 @media (max-width: 768px) {
     .whatsapp-float {
         width: 60px;
         height: 60px;
+        top: auto;
+        left: auto;
         bottom: 20px;
         right: 20px;
     }
