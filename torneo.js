@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -16,13 +17,57 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig); const db = getDatabase(app);
+const app = initializeApp(firebaseConfig); 
+const db = getDatabase(app);
+const auth = getAuth(app);
 const torneosRef = ref(db, 'torneos');
 const solicitudesRef = ref(db, 'solicitudes');
 
 const btnSubmit = document.getElementById('btn-submit');
 const adminLoginBtn = document.getElementById('admin-login');
 const creatorBox = document.getElementById('creator-box');
+
+/* --- Autenticación Google --- */
+const provider = new GoogleAuthProvider();
+let currentUser = null;
+const btnGoogleLogin = document.getElementById('btn-google-login');
+const btnLogout = document.getElementById('btn-logout');
+const userProfile = document.getElementById('user-profile');
+const misSolicitudesBox = document.getElementById('mis-solicitudes-box');
+
+if (btnGoogleLogin) {
+    btnGoogleLogin.addEventListener('click', () => {
+        signInWithPopup(auth, provider).catch(error => {
+            console.error(error);
+            alert("Error al iniciar sesión con Google.");
+        });
+    });
+}
+
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        signOut(auth);
+    });
+}
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        btnGoogleLogin.style.display = 'none';
+        userProfile.style.display = 'flex';
+        document.getElementById('user-name').innerText = user.displayName;
+        document.getElementById('user-avatar').src = user.photoURL;
+        
+        misSolicitudesBox.style.display = 'block';
+        if (window.renderMisSolicitudes) window.renderMisSolicitudes();
+    } else {
+        currentUser = null;
+        btnGoogleLogin.style.display = 'flex';
+        userProfile.style.display = 'none';
+        misSolicitudesBox.style.display = 'none';
+    }
+});
+/* --------------------------------- */
 
 // Lógica para mostrar panel de creador solo al admin
 if (adminLoginBtn) {
@@ -93,6 +138,8 @@ if (enrollForm) {
                 nequiReferencia: playerNequi,
                 comprobante: base64Image,
                 estado: 'pendiente',
+                uid: currentUser.uid,        // Relacionar solicitud con el usuario
+                email: currentUser.email,
                 fecha: new Date().toISOString()
             }).then(() => {
                 document.getElementById('enroll-loading').style.display = 'none';
@@ -175,6 +222,11 @@ let selectedBtn = null;
 
 // Función para abrir modal y participar
 window.unirse = function(btn) {
+    if (!currentUser) {
+        alert("¡Alto ahí! Debes iniciar sesión con Google arriba a la derecha para inscribirte.");
+        return;
+    }
+
     selectedBtn = btn;
     const cardBody = btn.parentElement;
     const tName = cardBody.querySelector('h3').innerText;
@@ -295,7 +347,54 @@ onValue(solicitudesRef, (snapshot) => {
     if (window.isAdmin && window.renderSolicitudes) {
         window.renderSolicitudes();
     }
+    if (currentUser && window.renderMisSolicitudes) {
+        window.renderMisSolicitudes();
+    }
 });
+
+// Renderizar las solicitudes personales del usuario logueado
+window.renderMisSolicitudes = function() {
+    const sBox = document.getElementById('mis-solicitudes-list');
+    if(!sBox) return;
+    sBox.innerHTML = "";
+    
+    if (solicitudesData && currentUser) {
+        let empty = true;
+        Object.entries(solicitudesData).reverse().forEach(([key, s]) => {
+            if (s.uid === currentUser.uid) {
+                empty = false;
+                const dv = document.createElement('div');
+                let bgColor = "#161d24";
+                let statusText = "Pendiente ⏳";
+                let statusColor = "#ffcc00"; // amarillo
+                
+                if (s.estado === 'aceptada') {
+                    bgColor = "rgba(0, 255, 0, 0.1)";
+                    statusText = "Aceptada ✔️";
+                    statusColor = "#00ff00";
+                } else if (s.estado === 'rechazada') {
+                    bgColor = "rgba(255, 0, 0, 0.1)";
+                    statusText = "Rechazada ❌";
+                    statusColor = "#ff4655";
+                }
+                
+                dv.style = `background: ${bgColor}; border: 1px solid ${statusColor}; padding: 15px; border-radius: 5px;`;
+                
+                let html = `
+                    <h4 style="color:var(--primary-yellow); margin-bottom:5px;">Torneo: ${s.torneo}</h4>
+                    <p><strong>Jugador:</strong> ${s.nombreJugador}</p>
+                    <p style="margin-top:10px;"><strong>Estado: <span style="color: ${statusColor};">${statusText}</span></strong></p>
+                `;
+                
+                dv.innerHTML = html;
+                sBox.appendChild(dv);
+            }
+        });
+        if (empty) sBox.innerHTML = "<p>Aún no tienes solicitudes de torneos.</p>";
+    } else {
+        sBox.innerHTML = "<p>Aún no tienes solicitudes de torneos.</p>";
+    }
+};
 
 // Aceptar solicitud
 window.aceptarSolicitud = function(reqKey, torneoName) {
