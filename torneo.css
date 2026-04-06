@@ -204,6 +204,61 @@ input:focus {
     margin-top: 15px;
 }
 
+/* Champions Gallery */
+.champions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 50px;
+}
+
+.champion-card {
+    background: linear-gradient(135deg, #0f1923, #1f2933);
+    border: 2px solid #ffaa00; /* Golden/Orange border */
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(255, 170, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.champion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 170, 0, 0.4);
+}
+
+.champion-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(255, 170, 0, 0.8);
+}
+
+.champion-name {
+    color: var(--primary-yellow);
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.champion-tournament {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.champion-prize {
+    color: #ffaa00;
+    font-weight: bold;
+    font-size: 1.1rem;
+    background: rgba(255, 170, 0, 0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
 /* Modal Stlyes */
 .modal-overlay {
     position: fixed;
@@ -293,4 +348,33 @@ input:focus {
 
 .enroll-form .input-group {
     margin-bottom: 15px;
+}
+
+/* WhatsApp Floating Button */
+.whatsapp-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50%;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-icon {
+    width: 35px;
+    height: 35px;
 }

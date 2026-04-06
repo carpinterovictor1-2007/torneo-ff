@@ -22,6 +22,7 @@ const db = getDatabase(app);
 const auth = getAuth(app);
 const torneosRef = ref(db, 'torneos');
 const solicitudesRef = ref(db, 'solicitudes');
+const ganadoresRef = ref(db, 'ganadores');
 
 const btnSubmit = document.getElementById('btn-submit');
 const creatorBox = document.getElementById('creator-box');
@@ -510,3 +511,32 @@ window.renderSolicitudes = function() {
         sBox.innerHTML = "<p style='color: white;'>No hay solicitudes pendientes.</p>";
     }
 };
+
+// Cargar y Renderizar Campeones
+onValue(ganadoresRef, (snapshot) => {
+    const data = snapshot.val();
+    renderGanadores(data);
+});
+
+function renderGanadores(data) {
+    const list = document.getElementById('champions-list');
+    if (!list) return;
+    list.innerHTML = "";
+    
+    if (data) {
+        Object.entries(data).reverse().forEach(([key, g]) => {
+            const card = document.createElement('div');
+            card.className = 'champion-card';
+            
+            card.innerHTML = `
+                <div class="champion-icon">🏆</div>
+                <div class="champion-name">${g.nombre || 'Desconocido'}</div>
+                <div class="champion-tournament">${g.torneo || 'Torneo'}</div>
+                <div class="champion-prize">${g.premio || 'Premio'}</div>
+            `;
+            list.appendChild(card);
+        });
+    } else {
+        list.innerHTML = "<p style='color: #888; grid-column: 1 / -1; text-align: center;'>Aún no hay campeones registrados.</p>";
+    }
+}
