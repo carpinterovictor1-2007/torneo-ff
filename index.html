@@ -69,7 +69,7 @@
             <button class="close-modal" id="close-modal-btn">&times;</button>
             <h2 class="modal-title">INSCRIPCIÓN AL TORNEO</h2>
             <p class="modal-subtitle" id="modal-tournament-name">CARGANDO...</p>
-            
+
             <div class="payment-info">
                 <h3>DATOS PARA EL PAGO</h3>
                 <p>Nequi: <span class="highlight">3226356817</span></p>
@@ -91,20 +91,23 @@
                     <label>NÚMERO DE REFERENCIA NEQUI</label>
                     <input type="text" id="f-reference" name="Referencia_Nequi" placeholder="Ej: M123456789" required>
                 </div>
-                
-                <button type="submit" class="btn-create" id="btn-confirm-enroll">CONFIRMAR INSCRIPCIÓN Y NOTIFICAR</button>
+
+                <button type="submit" class="btn-create" id="btn-confirm-enroll">CONFIRMAR INSCRIPCIÓN Y
+                    NOTIFICAR</button>
             </form>
-            <div id="enroll-loading" style="display: none; text-align: center; color: var(--primary-yellow); margin-top: 15px;">
+            <div id="enroll-loading"
+                style="display: none; text-align: center; color: var(--primary-yellow); margin-top: 15px;">
                 Procesando solicitud...
             </div>
-            <div id="enroll-success" style="display: none; text-align: center; color: #00ff00; margin-top: 15px; font-weight: bold;">
+            <div id="enroll-success"
+                style="display: none; text-align: center; color: #00ff00; margin-top: 15px; font-weight: bold;">
                 ¡Inscripción enviada con éxito! Espera validación.
             </div>
         </div>
     </div>
 
     <!-- Enlace al archivo JavaScript externo -->
-    <script src="torneo.js"></script>
+    <script type="module" src="torneo.js"></script>
 </body>
 
 </html>
