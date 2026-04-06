@@ -37,9 +37,14 @@ const misSolicitudesBox = document.getElementById('mis-solicitudes-box');
 
 if (btnGoogleLogin) {
     btnGoogleLogin.addEventListener('click', () => {
+        if (window.location.protocol === 'file:') {
+            alert("⚠️ CUIDADO: Firebase y Google bloquean el inicio de sesión si abres el archivo dando doble clic (file://). \n\nPara que el inicio de sesión de Google pueda funcionar, necesitas usar un servidor web local (por ejemplo, instalar la extensión 'Live Server' en VSCode y abrir la página con ella) o publicar la página en internet.");
+            return;
+        }
+
         signInWithPopup(auth, provider).catch(error => {
             console.error(error);
-            alert("Error al iniciar sesión con Google.");
+            alert("Error al iniciar sesión con Google: " + error.message);
         });
     });
 }
