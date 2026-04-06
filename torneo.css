@@ -16,8 +16,31 @@
 body {
     background-color: var(--bg-dark);
     color: var(--text-light);
-    background-image: radial-gradient(circle, rgba(255, 70, 85, 0.1) 0%, rgba(15, 25, 35, 1) 70%);
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    background: radial-gradient(circle, rgba(255, 70, 85, 0.15) 0%, rgba(15, 25, 35, 0.85) 80%), url('bg.png') no-repeat center center;
+    background-size: cover;
+    z-index: -1;
+    animation: moveBg 25s ease-in-out infinite alternate;
+}
+
+@keyframes moveBg {
+    0% {
+        transform: scale(1) translate(0, 0);
+    }
+    100% {
+        transform: scale(1.05) translate(-20px, 15px);
+    }
 }
 
 header {
