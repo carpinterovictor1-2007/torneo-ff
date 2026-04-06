@@ -24,7 +24,6 @@ const torneosRef = ref(db, 'torneos');
 const solicitudesRef = ref(db, 'solicitudes');
 
 const btnSubmit = document.getElementById('btn-submit');
-const adminLoginBtn = document.getElementById('admin-login');
 const creatorBox = document.getElementById('creator-box');
 
 /* --- Autenticación Google --- */
@@ -68,7 +67,6 @@ onAuthStateChanged(auth, (user) => {
             window.isAdmin = true;
             creatorBox.style.display = 'block';
             document.getElementById('solicitudes-box').style.display = 'block';
-            if (adminLoginBtn) adminLoginBtn.style.display = 'none';
             if (window.renderSolicitudes) window.renderSolicitudes();
             
             // Opcional: Una pequeña alerta de bienvenida si acaba de entrar
@@ -90,29 +88,11 @@ onAuthStateChanged(auth, (user) => {
         window.isAdmin = false;
         creatorBox.style.display = 'none';
         document.getElementById('solicitudes-box').style.display = 'none';
-        if (adminLoginBtn) adminLoginBtn.style.display = 'block';
     }
     // Refrescar torneos para bloquear botones si ya estaban inscritos
     if (window.renderTorneos) window.renderTorneos();
 });
 /* --------------------------------- */
-
-// Lógica para mostrar panel de creador solo al admin
-if (adminLoginBtn) {
-    adminLoginBtn.addEventListener('click', () => {
-        const pass = prompt('Ingresa la clave secreta de administrador para crear torneos:');
-        if (pass === '18072007v') {
-            creatorBox.style.display = 'block';
-            document.getElementById('solicitudes-box').style.display = 'block';
-            window.isAdmin = true; // Para mostrar botón de borrar
-            if (window.renderTorneos) window.renderTorneos(); // Redibujar con botones de borrar
-            if (window.renderSolicitudes) window.renderSolicitudes(); // Imprimir panel solicitudes
-            alert('¡Acceso concedido, Victor! Panel de creación habilitado.');
-        } else if (pass !== null) {
-            alert('Clave incorrecta. Solo el dueño puede crear torneos.');
-        }
-    });
-}
 
 if (btnSubmit) {
     btnSubmit.addEventListener('click', () => {
