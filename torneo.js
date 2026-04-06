@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -108,6 +108,7 @@ function crearTorneo() {
     // Obtener valores de los inputs
     const nombre = document.getElementById('t-name').value;
     const modo = document.getElementById('t-mode').value;
+    const formato = document.getElementById('t-format') ? document.getElementById('t-format').value : 'Solo';
     const mapa = document.getElementById('t-map').value;
     const premio = document.getElementById('t-prize').value;
     const inscripcion = document.getElementById('t-fee') ? document.getElementById('t-fee').value : '';
@@ -124,9 +125,11 @@ function crearTorneo() {
     push(torneosRef, {
         nombre: nombre,
         modo: modo,
+        formato: formato,
         mapa: mapa,
         premio: premio,
         inscripcion: inscripcion || 'Gratis',
+        inscritos: 0,
         fechaTorneo: fecha,
         fechaPublicacion: new Date().toISOString()
     }).then(() => {
@@ -171,6 +174,18 @@ window.borrarTorneo = function(key) {
     }
 };
 
+// Función para actualizar inscritos
+window.actualizarInscritos = function(key) {
+    const val = document.getElementById('inp-count-' + key).value;
+    update(ref(db, 'torneos/' + key), {
+        inscritos: parseInt(val)
+    }).then(() => {
+        alert("¡Cupos actualizados correctamente!");
+    }).catch(e => {
+        alert("Error al actualizar: " + e);
+    });
+};
+
 let torneosData = null;
 
 // Cargar Torneos desde Firebase en tiempo real
@@ -207,20 +222,35 @@ window.renderTorneos = function() {
                     <div class="card-info">
                         <span>🗓️ FECHA: ${fechaStr}</span>
                         <span>🎮 MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
+                        <span>👥 FORMATO: ${(t.formato || 'Solo').toUpperCase()}</span>
                         <span>🗺️ MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
                         <span>🏆 PREMIO: ${t.premio || 'Sorpresa'}</span>
                         <span>💲 INSCRIPCIÓN: ${t.inscripcion || 'Gratis'}</span>
+                        <span style="color: #00ff00; font-weight: bold; font-size: 1rem; margin-top: 5px;">🔥 CUPOS: ${t.inscritos || 0} / 50</span>
                     </div>
-                    <button class="btn-action" onclick="unirse(this)">Participar</button>
             `;
+            
+            // Lógica para deshabilitar botón si está lleno (opcional, pero visualmente lo indicamos)
+            if ((t.inscritos || 0) >= 50) {
+                html += `<button class="btn-action" disabled style="background:#555; cursor:not-allowed;">Torneo Lleno</button>`;
+            } else {
+                html += `<button class="btn-action" onclick="unirse(this)">Participar</button>`;
+            }
 
-            // Si es admin, agregar botón de borrar
+            // Si es admin, agregar panel de control
             if (window.isAdmin) {
                 html += `
-                    <button class="btn-action" onclick="borrarTorneo('${key}')" 
-                            style="background: #ff4655; margin-top: 10px; opacity: 0.9;">
-                        Eliminar Torneo
-                    </button>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid #ffcc00; border-radius: 5px;">
+                        <label style="color:#ffcc00; font-size:0.8rem; display:block; margin-bottom:5px;">Actualizar Inscritos (Max 50):</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="number" id="inp-count-${key}" value="${t.inscritos || 0}" max="50" min="0" style="width: 60px; padding: 5px; background: #222; color: white; border: 1px solid #444;">
+                            <button onclick="actualizarInscritos('${key}')" style="background:#00ff00; color:black; border:none; padding:5px; cursor:pointer; font-weight:bold; flex-grow:1;">Guardar Cupos</button>
+                        </div>
+                        <button class="btn-action" onclick="borrarTorneo('${key}')" 
+                                style="background: #ff4655; width: 100%; margin-top: 10px; padding: 8px;">
+                            Eliminar Torneo
+                        </button>
+                    </div>
                 `;
             }
 

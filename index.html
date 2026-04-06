@@ -38,6 +38,14 @@
                     </select>
                 </div>
                 <div class="input-group">
+                    <label for="t-format">FORMATO</label>
+                    <select id="t-format">
+                        <option value="Solo">Solo</option>
+                        <option value="Dúo">Dúo</option>
+                        <option value="Escuadra">Escuadra</option>
+                    </select>
+                </div>
+                <div class="input-group">
                     <label for="t-map">MAPA</label>
                     <select id="t-map">
                         <option value="Bermuda">Bermuda</option>
@@ -83,7 +91,7 @@
                 <p>Debes transferir el valor al número <strong>Nequi: 3226356817</strong>.</p>
             </div>
 
-            <form id="enroll-form" class="enroll-form">
+            <form id="enroll-form" class="enroll-form" enctype="multipart/form-data">
                 <input type="hidden" id="f-tournament-name" name="Torneo">
                 
                 <div class="input-group">
@@ -97,6 +105,10 @@
                 <div class="input-group">
                     <label>NÚMERO DE NEQUI (Desde el que pagaste)</label>
                     <input type="text" name="Nequi_Referencia" required placeholder="Ej: 3001234567">
+                </div>
+                <div class="input-group">
+                    <label>COMPROBANTE DE PAGO (Captura)</label>
+                    <input type="file" name="Comprobante" accept="image/*" required style="background: transparent; padding: 5px 0; border: none;">
                 </div>
                 
                 <button type="submit" id="btn-confirm-enroll" class="btn-action">Confirmar Inscripción</button>
