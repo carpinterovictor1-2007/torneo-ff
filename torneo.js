@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,7 +17,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig); const db = getDatabase(app);
-const storage = getStorage(app);
 const torneosRef = ref(db, 'torneos');
 const solicitudesRef = ref(db, 'solicitudes');
 
@@ -82,46 +80,53 @@ if (enrollForm) {
         const playerNequi = formData.get('Nequi_Referencia');
         const torneoName = formData.get('Torneo');
 
-        // Referencia a Storage (comprobantes/fecha_archivo.ext)
-        const storageRef = sRef(storage, `comprobantes/${Date.now()}_${file.name}`);
-        
-        // Subir archivo
-        uploadBytes(storageRef, file).then((snapshot) => {
-            return getDownloadURL(snapshot.ref);
-        }).then((downloadURL) => {
-            // Guardar en Realtime Database
-            return push(solicitudesRef, {
+        // Usar FileReader para convertir la imagen a Base64 sin depender de Firebase Storage
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Image = e.target.result;
+            
+            // Guardar directamente en Realtime Database
+            push(solicitudesRef, {
                 torneo: torneoName,
                 nombreJugador: playerNombre,
                 idJugador: playerId,
                 nequiReferencia: playerNequi,
-                comprobante: downloadURL,
+                comprobante: base64Image,
                 estado: 'pendiente',
                 fecha: new Date().toISOString()
-            });
-        }).then(() => {
-            document.getElementById('enroll-loading').style.display = 'none';
-            document.getElementById('enroll-success').style.display = 'block';
+            }).then(() => {
+                document.getElementById('enroll-loading').style.display = 'none';
+                document.getElementById('enroll-success').style.display = 'block';
 
-            if (selectedBtn) {
-                selectedBtn.innerText = "¡EN REVISIÓN!";
-                selectedBtn.style.background = "#ffcc00"; // Yellow
-                selectedBtn.style.color = "black";
-                selectedBtn.disabled = true;
-            }
+                if (selectedBtn) {
+                    selectedBtn.innerText = "¡EN REVISIÓN!";
+                    selectedBtn.style.background = "#ffcc00"; // Yellow
+                    selectedBtn.style.color = "black";
+                    selectedBtn.disabled = true;
+                }
 
-            setTimeout(() => {
-                modal.classList.remove('active');
-                enrollForm.reset();
-                document.getElementById('enroll-success').style.display = 'none';
+                setTimeout(() => {
+                    modal.classList.remove('active');
+                    enrollForm.reset();
+                    document.getElementById('enroll-success').style.display = 'none';
+                    document.getElementById('btn-confirm-enroll').disabled = false;
+                }, 3000);
+            }).catch((error) => {
+                console.error("Error al suscribirse:", error);
+                alert("Hubo un error al enviar tu inscripción. Intenta de nuevo.");
+                document.getElementById('enroll-loading').style.display = 'none';
                 document.getElementById('btn-confirm-enroll').disabled = false;
-            }, 3000);
-        }).catch((error) => {
-            console.error("Error al suscribirse:", error);
-            alert("Hubo un error al enviar tu inscripción. Intenta de nuevo.");
+            });
+        };
+        
+        reader.onerror = function() {
+            alert("Oops! Ocurrió un error leyendo tu imagen de Nequi.");
             document.getElementById('enroll-loading').style.display = 'none';
             document.getElementById('btn-confirm-enroll').disabled = false;
-        });
+        };
+
+        // Leer la imagen
+        reader.readAsDataURL(file);
     });
 }
 
