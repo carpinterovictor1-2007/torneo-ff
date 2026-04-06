@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,38 +19,44 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig); const db = getDatabase(app);
 const torneosRef = ref(db, 'torneos');
 
-document.addEventListener('DOMContentLoaded', () => {
-    const btnSubmit = document.getElementById('btn-submit');
-    const adminLoginBtn = document.getElementById('admin-login');
-    const creatorBox = document.getElementById('creator-box');
+const btnSubmit = document.getElementById('btn-submit');
+const adminLoginBtn = document.getElementById('admin-login');
+const creatorBox = document.getElementById('creator-box');
 
-    // Lógica para mostrar panel de creador solo al admin
-    if (adminLoginBtn) {
-        adminLoginBtn.addEventListener('click', () => {
-            const pass = prompt('Ingresa la clave secreta de administrador para crear torneos:');
-            if (pass === '18072007v') {
-                creatorBox.style.display = 'block';
-                alert('¡Acceso concedido, Victor! Panel de creación habilitado.');
-            } else if (pass !== null) {
-                alert('Clave incorrecta. Solo el dueño puede crear torneos.');
-            }
-        });
-    }
+// Lógica para mostrar panel de creador solo al admin
+if (adminLoginBtn) {
+    adminLoginBtn.addEventListener('click', () => {
+        const pass = prompt('Ingresa la clave secreta de administrador para crear torneos:');
+        if (pass === '18072007v') {
+            creatorBox.style.display = 'block';
+            window.isAdmin = true; // Para mostrar botón de borrar
+            if (window.renderTorneos) window.renderTorneos(); // Redibujar con botones de borrar
+            alert('¡Acceso concedido, Victor! Panel de creación habilitado.');
+        } else if (pass !== null) {
+            alert('Clave incorrecta. Solo el dueño puede crear torneos.');
+        }
+    });
+}
 
+if (btnSubmit) {
     btnSubmit.addEventListener('click', () => {
         crearTorneo();
     });
+}
 
-    // Lógica del Modal
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const modal = document.getElementById('join-modal');
-    const enrollForm = document.getElementById('enroll-form');
+// Lógica del Modal
+const closeModalBtn = document.getElementById('close-modal-btn');
+const modal = document.getElementById('join-modal');
+const enrollForm = document.getElementById('enroll-form');
 
+if (closeModalBtn) {
     closeModalBtn.addEventListener('click', () => {
         modal.classList.remove('active');
     });
+}
 
-    // Envío del formulario
+// Envío del formulario
+if (enrollForm) {
     enrollForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('btn-confirm-enroll').disabled = false;
             });
     });
-});
+}
 
 function crearTorneo() {
     // Obtener valores de los inputs
@@ -104,6 +110,8 @@ function crearTorneo() {
     const modo = document.getElementById('t-mode').value;
     const mapa = document.getElementById('t-map').value;
     const premio = document.getElementById('t-prize').value;
+    const dateInput = document.getElementById('t-date');
+    const fecha = dateInput && dateInput.value ? dateInput.value : '';
 
     // Validación simple
     if (nombre.trim() === "" || premio.trim() === "") {
@@ -117,11 +125,13 @@ function crearTorneo() {
         modo: modo,
         mapa: mapa,
         premio: premio,
-        fecha: new Date().toISOString()
+        fechaTorneo: fecha,
+        fechaPublicacion: new Date().toISOString()
     }).then(() => {
         alert("¡Torneo publicado en la nube con éxito!");
         document.getElementById('t-name').value = "";
         document.getElementById('t-prize').value = "";
+        if (dateInput) dateInput.value = "";
     }).catch((error) => {
         console.error("Error al guardar:", error);
         alert("Error al conectar con Firebase. Revisa la consola.");
@@ -146,35 +156,73 @@ window.unirse = function(btn) {
     modal.classList.add('active');
 };
 
+// Función global para borrar torneos
+window.borrarTorneo = function(key) {
+    if (confirm("¿Estás seguro de que quieres eliminar este torneo?")) {
+        remove(ref(db, 'torneos/' + key)).then(() => {
+            alert("Torneo eliminado correctamente.");
+        }).catch((error) => {
+            console.error("Error al borrar:", error);
+            alert("No se pudo eliminar el torneo.");
+        });
+    }
+};
+
+let torneosData = null;
+
 // Cargar Torneos desde Firebase en tiempo real
 onValue(torneosRef, (snapshot) => {
-    const data = snapshot.val();
-    const lista = document.getElementById('tournament-list');
-    
-    if (lista) {
-        lista.innerHTML = ""; // Limpiar lista
-        if (data) {
-            // Mostrar últimos torneos primero
-            Object.values(data).reverse().forEach(t => {
-                const card = document.createElement('div');
-                card.className = 'tournament-card';
-                card.innerHTML = `
-                    <div class="status-badge" style="background: #ffcc00">ACTIVO</div>
-                    <div class="card-header" style="background: linear-gradient(45deg, #1f2933, #ff4655)">
-                        ${(t.nombre || 'TORN').substring(0, 4).toUpperCase()}
-                    </div>
-                    <div class="card-body">
-                        <h3>${(t.nombre || '').toUpperCase()}</h3>
-                        <div class="card-info">
-                            <span>MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
-                            <span>MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
-                            <span>PREMIO: ${t.premio || 'Sorpresa'}</span>
-                        </div>
-                        <button class="btn-action" onclick="unirse(this)">Participar</button>
-                    </div>
-                `;
-                lista.appendChild(card);
-            });
-        }
-    }
+    torneosData = snapshot.val();
+    if (window.renderTorneos) window.renderTorneos();
 });
+
+window.renderTorneos = function() {
+    const lista = document.getElementById('tournament-list');
+    if (!lista) return;
+    
+    lista.innerHTML = ""; // Limpiar lista
+    if (torneosData) {
+        // Mostrar últimos torneos primero
+        Object.entries(torneosData).reverse().forEach(([key, t]) => {
+            const card = document.createElement('div');
+            card.className = 'tournament-card';
+            
+            // Formatear la fecha si existe
+            let fechaStr = "Por anunciar";
+            if (t.fechaTorneo) {
+                const f = new Date(t.fechaTorneo);
+                fechaStr = f.toLocaleDateString() + ' ' + f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
+            let html = `
+                <div class="status-badge" style="background: #ffcc00">ACTIVO</div>
+                <div class="card-header" style="background: linear-gradient(45deg, #1f2933, #ff4655)">
+                    ${(t.nombre || 'TORN').substring(0, 4).toUpperCase()}
+                </div>
+                <div class="card-body">
+                    <h3>${(t.nombre || '').toUpperCase()}</h3>
+                    <div class="card-info">
+                        <span>🗓️ FECHA: ${fechaStr}</span>
+                        <span>🎮 MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
+                        <span>🗺️ MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
+                        <span>🏆 PREMIO: ${t.premio || 'Sorpresa'}</span>
+                    </div>
+                    <button class="btn-action" onclick="unirse(this)">Participar</button>
+            `;
+
+            // Si es admin, agregar botón de borrar
+            if (window.isAdmin) {
+                html += `
+                    <button class="btn-action" onclick="borrarTorneo('${key}')" 
+                            style="background: #ff4655; margin-top: 10px; opacity: 0.9;">
+                        Eliminar Torneo
+                    </button>
+                `;
+            }
+
+            html += `</div>`;
+            card.innerHTML = html;
+            lista.appendChild(card);
+        });
+    }
+};
