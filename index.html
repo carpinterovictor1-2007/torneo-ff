@@ -1,45 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FF MASTERS | Tournament Hub</title>
-    <!-- Enlace al archivo CSS externo -->
+    <title>Torneos Free Fire</title>
     <link rel="stylesheet" href="torneo.css">
 </head>
-
 <body>
-
     <header>
-        <div class="logo" id="admin-login" style="cursor: pointer;" title="Acceso Administrador">FF MASTERS 🔒</div>
-        <nav class="user-info">TEMPORADA 2026</nav>
+        <div class="logo">TORNEOS FF</div>
+        <button id="admin-login" style="background:transparent; color: var(--primary-yellow); border:1px solid var(--primary-yellow); padding:5px 10px; cursor:pointer;">Admin</button>
     </header>
 
-    <main class="container">
-        <section class="hero-section">
-            <h1>CENTRO DE TORNEOS</h1>
-            <p>Organiza tu propia batalla épica al estilo Booyah</p>
-        </section>
+    <div class="container">
+        <div class="hero-section">
+            <h1>BATALLA POR LA GLORIA</h1>
+            <p>Participa en los mejores torneos de Free Fire y demuestra tu nivel.</p>
+        </div>
 
-        <!-- Formulario para crear torneo -->
-        <section class="creator-box" id="creator-box" style="display: none;">
-            <h2 class="section-title">CREAR NUEVA SALA</h2>
+        <div id="creator-box" class="creator-box" style="display: none;">
+            <h2 class="section-title">Crear Nuevo Torneo (Admin)</h2>
             <div class="form-grid">
                 <div class="input-group">
-                    <label>NOMBRE DEL TORNEO</label>
+                    <label for="t-name">NOMBRE DEL TORNEO</label>
                     <input type="text" id="t-name" placeholder="Ej: Copa Diamante">
                 </div>
                 <div class="input-group">
-                    <label>MODO DE JUEGO</label>
+                    <label for="t-mode">MODO</label>
                     <select id="t-mode">
-                        <option value="Battle Royale">Battle Royale (Clásico)</option>
+                        <option value="Clásico">Clásico</option>
                         <option value="Duelo de Escuadras">Duelo de Escuadras</option>
                         <option value="Lobo Solitario">Lobo Solitario</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>MAPA PRINCIPAL</label>
+                    <label for="t-map">MAPA</label>
                     <select id="t-map">
                         <option value="Bermuda">Bermuda</option>
                         <option value="Purgatorio">Purgatorio</option>
@@ -48,66 +43,51 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>PREMIO (DIAMANTES O $) </label>
-                    <input type="text" id="t-prize" placeholder="Ej: 5000 Diams">
+                    <label for="t-prize">PREMIO</label>
+                    <input type="text" id="t-prize" placeholder="Ej: 1000 Diamantes">
                 </div>
-                <button class="btn-create" id="btn-submit">Lanzar Torneo</button>
+                <button id="btn-submit" class="btn-create">Publicar Torneo</button>
             </div>
-        </section>
-
-        <h2 class="active-title">TORNEOS ACTIVOS</h2>
-
-        <!-- Contenedor dinámico -->
-        <div class="tournament-grid" id="tournament-list">
-            <!-- Aquí aparecerán los torneos que crees -->
         </div>
-    </main>
 
-    <!-- Modal de Inscripción -->
+        <h2 class="active-title">Torneos Activos</h2>
+        <div id="tournament-list" class="tournament-grid">
+            <!-- Los torneos se cargarán aquí desde Firebase -->
+        </div>
+    </div>
+
+    <!-- Modal para unirse -->
     <div id="join-modal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal" id="close-modal-btn">&times;</button>
-            <h2 class="modal-title">INSCRIPCIÓN AL TORNEO</h2>
-            <p class="modal-subtitle" id="modal-tournament-name">CARGANDO...</p>
-
+            <button id="close-modal-btn" class="close-modal">&times;</button>
+            <h2 class="modal-title">Inscripción al Torneo</h2>
+            <p class="modal-subtitle" id="modal-tournament-name">Nombre del Torneo</p>
+            
             <div class="payment-info">
-                <h3>DATOS PARA EL PAGO</h3>
-                <p>Nequi: <span class="highlight">3226356817</span></p>
-                <p>Titular: <span class="highlight">Victor Carpintero</span></p>
-                <p>Valor de inscripción: <span class="highlight">$5.000 COP</span></p>
+                <h3>⚠️ Requisitos</h3>
+                <p>Asegúrate de poner bien tu <span class="highlight">ID y Nombre en el juego</span>.</p>
             </div>
 
             <form id="enroll-form" class="enroll-form">
                 <input type="hidden" id="f-tournament-name" name="Torneo">
+                
                 <div class="input-group">
-                    <label>UID DE FREE FIRE (ID DE JUGADOR)</label>
-                    <input type="number" id="f-uid" name="Player_UID" placeholder="Ej: 12345678" required>
+                    <label>TU NOMBRE (Juego)</label>
+                    <input type="text" name="NombreJugador" required placeholder="Ej: ElManco99">
                 </div>
                 <div class="input-group">
-                    <label>NICKNAME (NOMBRE EN EL JUEGO)</label>
-                    <input type="text" id="f-nickname" name="Nickname" placeholder="Ej: PRO_K1LLER..." required>
+                    <label>TU ID</label>
+                    <input type="text" name="ID_Jugador" required placeholder="Ej: 123456789">
                 </div>
-                <div class="input-group">
-                    <label>NÚMERO DE REFERENCIA NEQUI</label>
-                    <input type="text" id="f-reference" name="Referencia_Nequi" placeholder="Ej: M123456789" required>
-                </div>
-
-                <button type="submit" class="btn-create" id="btn-confirm-enroll">CONFIRMAR INSCRIPCIÓN Y
-                    NOTIFICAR</button>
+                
+                <button type="submit" id="btn-confirm-enroll" class="btn-action">Confirmar Inscripción</button>
+                <div id="enroll-loading" style="display:none; color: var(--primary-yellow); margin-top: 10px;">Enviando inscripción...</div>
+                <div id="enroll-success" style="display:none; color: #00ff00; margin-top: 10px;">¡Inscrito con éxito! Espera revisión.</div>
             </form>
-            <div id="enroll-loading"
-                style="display: none; text-align: center; color: var(--primary-yellow); margin-top: 15px;">
-                Procesando solicitud...
-            </div>
-            <div id="enroll-success"
-                style="display: none; text-align: center; color: #00ff00; margin-top: 15px; font-weight: bold;">
-                ¡Inscripción enviada con éxito! Espera validación.
-            </div>
         </div>
     </div>
 
-    <!-- Enlace al archivo JavaScript externo -->
+    <!-- Firebase configuration as module script -->
     <script type="module" src="torneo.js"></script>
 </body>
-
 </html>

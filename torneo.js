@@ -111,51 +111,28 @@ function crearTorneo() {
         return;
     }
 
-    const lista = document.getElementById('tournament-list');
-
-    // Crear el elemento de la tarjeta
-    const card = document.createElement('div');
-    card.className = 'tournament-card';
-
-    // Generar contenido dinámico
-    card.innerHTML = `
-        <div class="status-badge" style="background: #ffcc00">NUEVO</div>
-        <div class="card-header" style="background: linear-gradient(45deg, #1f2933, #ff4655)">
-            ${nombre.substring(0, 4).toUpperCase()}
-        </div>
-        <div class="card-body">
-            <h3>${nombre.toUpperCase()}</h3>
-            <div class="card-info">
-                <span>MODO: ${modo.toUpperCase()}</span>
-                <span>MAPA: ${mapa.toUpperCase()}</span>
-                <span>PREMIO: ${premio}</span>
-            </div>
-            <button class="btn-action" onclick="unirse(this)">Participar</button>
-        </div>
-    `;
-
-    // Efecto de entrada (Fade in)
-    card.style.opacity = "0";
-    card.style.transform = "translateY(20px)";
-
-    lista.prepend(card);
-
-    setTimeout(() => {
-        card.style.transition = "all 0.5s ease";
-        card.style.opacity = "1";
-        card.style.transform = "translateY(0)";
-    }, 50);
-
-    // Limpiar el formulario
-    document.getElementById('t-name').value = "";
-    document.getElementById('t-prize').value = "";
+    // Guardar en Firebase
+    push(torneosRef, {
+        nombre: nombre,
+        modo: modo,
+        mapa: mapa,
+        premio: premio,
+        fecha: new Date().toISOString()
+    }).then(() => {
+        alert("¡Torneo publicado en la nube con éxito!");
+        document.getElementById('t-name').value = "";
+        document.getElementById('t-prize').value = "";
+    }).catch((error) => {
+        console.error("Error al guardar:", error);
+        alert("Error al conectar con Firebase. Revisa la consola.");
+    });
 }
 
 // Variable global para recordar qué botón se presionó
 let selectedBtn = null;
 
 // Función para abrir modal y participar
-function unirse(btn) {
+window.unirse = function(btn) {
     selectedBtn = btn;
     const cardBody = btn.parentElement;
     const tName = cardBody.querySelector('h3').innerText;
@@ -167,4 +144,37 @@ function unirse(btn) {
     // Mostrar modal
     const modal = document.getElementById('join-modal');
     modal.classList.add('active');
-}
+};
+
+// Cargar Torneos desde Firebase en tiempo real
+onValue(torneosRef, (snapshot) => {
+    const data = snapshot.val();
+    const lista = document.getElementById('tournament-list');
+    
+    if (lista) {
+        lista.innerHTML = ""; // Limpiar lista
+        if (data) {
+            // Mostrar últimos torneos primero
+            Object.values(data).reverse().forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'tournament-card';
+                card.innerHTML = `
+                    <div class="status-badge" style="background: #ffcc00">ACTIVO</div>
+                    <div class="card-header" style="background: linear-gradient(45deg, #1f2933, #ff4655)">
+                        ${(t.nombre || 'TORN').substring(0, 4).toUpperCase()}
+                    </div>
+                    <div class="card-body">
+                        <h3>${(t.nombre || '').toUpperCase()}</h3>
+                        <div class="card-info">
+                            <span>MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
+                            <span>MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
+                            <span>PREMIO: ${t.premio || 'Sorpresa'}</span>
+                        </div>
+                        <button class="btn-action" onclick="unirse(this)">Participar</button>
+                    </div>
+                `;
+                lista.appendChild(card);
+            });
+        }
+    }
+});
