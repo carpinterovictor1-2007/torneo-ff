@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -17,7 +18,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig); const db = getDatabase(app);
+const storage = getStorage(app);
 const torneosRef = ref(db, 'torneos');
+const solicitudesRef = ref(db, 'solicitudes');
 
 const btnSubmit = document.getElementById('btn-submit');
 const adminLoginBtn = document.getElementById('admin-login');
@@ -29,8 +32,10 @@ if (adminLoginBtn) {
         const pass = prompt('Ingresa la clave secreta de administrador para crear torneos:');
         if (pass === '18072007v') {
             creatorBox.style.display = 'block';
+            document.getElementById('solicitudes-box').style.display = 'block';
             window.isAdmin = true; // Para mostrar botón de borrar
             if (window.renderTorneos) window.renderTorneos(); // Redibujar con botones de borrar
+            if (window.renderSolicitudes) window.renderSolicitudes(); // Imprimir panel solicitudes
             alert('¡Acceso concedido, Victor! Panel de creación habilitado.');
         } else if (pass !== null) {
             alert('Clave incorrecta. Solo el dueño puede crear torneos.');
@@ -60,47 +65,63 @@ if (enrollForm) {
     enrollForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        // Obfuscation básica del correo para evitar bots de scraping
-        const emailPart1 = "carpinterovictor1";
-        const emailPart2 = "gmail.com";
-        const target = `https://formsubmit.co/ajax/${emailPart1}@${emailPart2}`;
-
-        const formData = new FormData(enrollForm);
-        // Ocultar captcha default de FormSubmit ya que usamos AJAX
-        formData.append('_captcha', 'false');
+        const fileInput = document.querySelector('input[name="Comprobante"]');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert("Sube el comprobante de pago por favor.");
+            return;
+        }
 
         document.getElementById('enroll-loading').style.display = 'block';
-        document.getElementById('enroll-success').style.display = 'none';
         document.getElementById('btn-confirm-enroll').disabled = true;
 
-        fetch(target, {
-            method: "POST",
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('enroll-loading').style.display = 'none';
-                document.getElementById('enroll-success').style.display = 'block';
+        const formData = new FormData(enrollForm);
+        const playerNombre = formData.get('NombreJugador');
+        const playerId = formData.get('ID_Jugador');
+        const playerNequi = formData.get('Nequi_Referencia');
+        const torneoName = formData.get('Torneo');
 
-                if (selectedBtn) {
-                    selectedBtn.innerText = "¡EN REVISIÓN!";
-                    selectedBtn.style.background = "#ffcc00"; // Yellow
-                    selectedBtn.style.color = "black";
-                    selectedBtn.disabled = true;
-                }
-
-                setTimeout(() => {
-                    modal.classList.remove('active');
-                    enrollForm.reset();
-                    document.getElementById('enroll-success').style.display = 'none';
-                    document.getElementById('btn-confirm-enroll').disabled = false;
-                }, 3000);
-            })
-            .catch(error => {
-                alert("Hubo un error al enviar tu inscripción. Intenta de nuevo.");
-                document.getElementById('enroll-loading').style.display = 'none';
-                document.getElementById('btn-confirm-enroll').disabled = false;
+        // Referencia a Storage (comprobantes/fecha_archivo.ext)
+        const storageRef = sRef(storage, `comprobantes/${Date.now()}_${file.name}`);
+        
+        // Subir archivo
+        uploadBytes(storageRef, file).then((snapshot) => {
+            return getDownloadURL(snapshot.ref);
+        }).then((downloadURL) => {
+            // Guardar en Realtime Database
+            return push(solicitudesRef, {
+                torneo: torneoName,
+                nombreJugador: playerNombre,
+                idJugador: playerId,
+                nequiReferencia: playerNequi,
+                comprobante: downloadURL,
+                estado: 'pendiente',
+                fecha: new Date().toISOString()
             });
+        }).then(() => {
+            document.getElementById('enroll-loading').style.display = 'none';
+            document.getElementById('enroll-success').style.display = 'block';
+
+            if (selectedBtn) {
+                selectedBtn.innerText = "¡EN REVISIÓN!";
+                selectedBtn.style.background = "#ffcc00"; // Yellow
+                selectedBtn.style.color = "black";
+                selectedBtn.disabled = true;
+            }
+
+            setTimeout(() => {
+                modal.classList.remove('active');
+                enrollForm.reset();
+                document.getElementById('enroll-success').style.display = 'none';
+                document.getElementById('btn-confirm-enroll').disabled = false;
+            }, 3000);
+        }).catch((error) => {
+            console.error("Error al suscribirse:", error);
+            alert("Hubo un error al enviar tu inscripción. Intenta de nuevo.");
+            document.getElementById('enroll-loading').style.display = 'none';
+            document.getElementById('btn-confirm-enroll').disabled = false;
+        });
     });
 }
 
@@ -258,5 +279,86 @@ window.renderTorneos = function() {
             card.innerHTML = html;
             lista.appendChild(card);
         });
+    }
+};
+
+let solicitudesData = null;
+
+// Cargar Solicitudes
+onValue(solicitudesRef, (snapshot) => {
+    solicitudesData = snapshot.val();
+    if (window.isAdmin && window.renderSolicitudes) {
+        window.renderSolicitudes();
+    }
+});
+
+// Aceptar solicitud
+window.aceptarSolicitud = function(reqKey, torneoName) {
+    if(!confirm("¿Aprobarás esta solicitud?")) return;
+    
+    // Cambiar estado a 'aceptada'
+    update(ref(db, `solicitudes/${reqKey}`), { estado: 'aceptada' })
+    .then(() => {
+        // Encontrar torneo por nombre y sumar +1
+        if (torneosData) {
+            let foundTournamentId = null;
+            let currentInscritos = 0;
+            Object.entries(torneosData).forEach(([key, t]) => {
+                if (t.nombre === torneoName) {
+                    foundTournamentId = key;
+                    currentInscritos = t.inscritos || 0;
+                }
+            });
+            if (foundTournamentId) {
+                update(ref(db, `torneos/${foundTournamentId}`), { inscritos: currentInscritos + 1 });
+            }
+        }
+        alert("Solicitud Aceptada y cupos actualizados.");
+    }).catch(e => alert("Error: " + e));
+};
+
+// Rechazar solicitud
+window.rechazarSolicitud = function(reqKey) {
+    if(confirm("¿Estás seguro de RECHAZAR esta solicitud?")) {
+        update(ref(db, `solicitudes/${reqKey}`), { estado: 'rechazada' });
+    }
+};
+
+window.renderSolicitudes = function() {
+    const sBox = document.getElementById('solicitudes-list');
+    if(!sBox) return;
+    sBox.innerHTML = "";
+
+    if (solicitudesData) {
+        let empty = true;
+        Object.entries(solicitudesData).reverse().forEach(([key, s]) => {
+            if (s.estado === 'pendiente') {
+                empty = false;
+                const dv = document.createElement('div');
+                dv.style = "background: #111; border: 1px solid #444; padding: 15px; border-radius: 5px; display: flex; gap: 15px; align-items: start; flex-wrap: wrap;";
+                
+                dv.innerHTML = `
+                    <div style="flex: 1; min-width: 200px;">
+                        <h4 style="color:var(--primary-yellow); margin-bottom:5px;">Torneo: ${s.torneo}</h4>
+                        <p><strong>Jugador:</strong> ${s.nombreJugador}</p>
+                        <p><strong>ID:</strong> ${s.idJugador}</p>
+                        <p><strong>Nequi Ref:</strong> ${s.nequiReferencia}</p>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <button onclick="aceptarSolicitud('${key}', '${s.torneo}')" style="background:#00ff00; color:#000; padding:8px 15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Aceptar ✔️</button>
+                            <button onclick="rechazarSolicitud('${key}')" style="background:#ff4655; color:#fff; padding:8px 15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">Rechazar ❌</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; text-align:right;">
+                        <a href="${s.comprobante}" target="_blank">
+                            <img src="${s.comprobante}" style="max-height: 150px; border: 2px solid #555; border-radius: 5px;" alt="Comprobante">
+                        </a>
+                    </div>
+                `;
+                sBox.appendChild(dv);
+            }
+        });
+        if (empty) sBox.innerHTML = "<p style='color: white;'>No hay solicitudes pendientes.</p>";
+    } else {
+        sBox.innerHTML = "<p style='color: white;'>No hay solicitudes pendientes.</p>";
     }
 };
