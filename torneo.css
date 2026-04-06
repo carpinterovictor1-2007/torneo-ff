@@ -259,6 +259,34 @@ input:focus {
     display: inline-block;
 }
 
+/* Custom scrollbar for chat */
+#chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+#chat-messages::-webkit-scrollbar-track {
+    background: #0f1923;
+}
+#chat-messages::-webkit-scrollbar-thumb {
+    background: var(--primary-yellow);
+    border-radius: 3px;
+}
+.chat-msg {
+    padding: 8px 12px;
+    border-radius: 5px;
+    background: #1f2933;
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+.chat-msg.me {
+    background: rgba(255, 204, 0, 0.1);
+    border-left: 3px solid var(--primary-yellow);
+}
+.chat-user {
+    font-weight: bold;
+    color: var(--primary-yellow);
+    margin-right: 5px;
+}
+
 /* Modal Stlyes */
 .modal-overlay {
     position: fixed;

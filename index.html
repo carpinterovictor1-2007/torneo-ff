@@ -95,6 +95,17 @@
             </div>
         </div>
         
+        <div class="chat-container creator-box" style="border-left-color: #ff9900; max-height: 400px; display: flex; flex-direction: column;">
+            <h2 class="section-title" style="margin-bottom: 10px; font-size: 1.2rem; color: #ff9900;">💬 Chat Global</h2>
+            <div id="chat-messages" style="flex: 1; min-height: 200px; overflow-y: auto; background: #0f1923; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #333; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Mensajes -->
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chat-input" maxlength="50" placeholder="Inicia sesión para escribir... (Max 50 char)" style="flex: 1; border-radius: 3px;" disabled>
+                <button id="chat-btn" class="btn-create" style="margin-top: 0; padding: 10px 20px; width: auto;" disabled>Enviar</button>
+            </div>
+        </div>
+        
         <h2 class="active-title">Torneos Activos</h2>
         <div id="tournament-list" class="tournament-grid">
             <!-- Los torneos se cargarán aquí desde Firebase -->

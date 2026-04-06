@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onValue, remove, update, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -79,6 +79,14 @@ onAuthStateChanged(auth, (user) => {
 
         misSolicitudesBox.style.display = 'block';
         if (window.renderMisSolicitudes) window.renderMisSolicitudes();
+        
+        const chatInp = document.getElementById('chat-input');
+        const chatBt = document.getElementById('chat-btn');
+        if (chatInp && chatBt) {
+            chatInp.disabled = false;
+            chatBt.disabled = false;
+            chatInp.placeholder = "Escribe un mensaje... (Max 50 char)";
+        }
     } else {
         currentUser = null;
         btnGoogleLogin.style.display = 'flex';
@@ -89,6 +97,14 @@ onAuthStateChanged(auth, (user) => {
         window.isAdmin = false;
         creatorBox.style.display = 'none';
         document.getElementById('solicitudes-box').style.display = 'none';
+
+        const chatInp = document.getElementById('chat-input');
+        const chatBt = document.getElementById('chat-btn');
+        if (chatInp && chatBt) {
+            chatInp.disabled = true;
+            chatBt.disabled = true;
+            chatInp.placeholder = "Inicia sesión para escribir... (Max 50 char)";
+        }
     }
     // Refrescar torneos para bloquear botones si ya estaban inscritos
     if (window.renderTorneos) window.renderTorneos();
@@ -539,4 +555,69 @@ function renderGanadores(data) {
     } else {
         list.innerHTML = "<p style='color: #888; grid-column: 1 / -1; text-align: center;'>Aún no hay campeones registrados.</p>";
     }
+}
+
+// LOGICA DEL CHAT
+const chatRef = ref(db, 'chat');
+const chatMessagesContainer = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+const chatBtn = document.getElementById('chat-btn');
+
+if (chatRef && chatMessagesContainer) {
+    const chatQuery = query(chatRef, limitToLast(50));
+    onValue(chatQuery, (snapshot) => {
+        chatMessagesContainer.innerHTML = '';
+        const data = snapshot.val();
+        if (data) {
+            Object.entries(data).forEach(([key, msg]) => {
+                const div = document.createElement('div');
+                div.className = 'chat-msg';
+                if (currentUser && currentUser.uid === msg.uid) {
+                    div.classList.add('me');
+                }
+                const b = document.createElement('b');
+                b.className = 'chat-user';
+                b.textContent = (msg.nombre || 'Anónimo') + ':';
+                const span = document.createElement('span');
+                span.textContent = ' ' + msg.texto;
+                div.appendChild(b);
+                div.appendChild(span);
+                chatMessagesContainer.appendChild(div);
+            });
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        } else {
+            chatMessagesContainer.innerHTML = '<p style="color:#888; text-align:center;">¡Sé el primero en saludar! 👋</p>';
+        }
+    });
+}
+
+function enviarMensajeChat() {
+    if (!currentUser || !chatInput || chatInput.value.trim() === '') return;
+    const texto = chatInput.value.trim();
+    if (texto.length > 50) return; // Validación de seguridad
+
+    chatInput.disabled = true;
+    if(chatBtn) chatBtn.disabled = true;
+
+    push(chatRef, {
+        uid: currentUser.uid,
+        nombre: currentUser.displayName || 'Soldado',
+        texto: texto,
+        timestamp: new Date().toISOString()
+    }).then(() => {
+        chatInput.value = '';
+    }).catch((e) => {
+        console.error('Error enviando chat: ', e);
+    }).finally(() => {
+        chatInput.disabled = false;
+        if(chatBtn) chatBtn.disabled = false;
+        chatInput.focus();
+    });
+}
+
+if (chatBtn) chatBtn.addEventListener('click', enviarMensajeChat);
+if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') enviarMensajeChat();
+    });
 }
