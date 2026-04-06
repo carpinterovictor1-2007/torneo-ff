@@ -138,6 +138,23 @@ if (enrollForm) {
         reader.onload = function(e) {
             const base64Image = e.target.result;
             
+            // Revisión final de seguridad para evitar dobles inscripciones (Backend validation)
+            let yaExiste = false;
+            if (currentUser && window.solicitudesDataGlobal) {
+                Object.values(window.solicitudesDataGlobal).forEach(s => {
+                    if (s.uid === currentUser.uid && (s.torneo || '').toLowerCase() === (torneoName || '').toLowerCase()) {
+                        yaExiste = true;
+                    }
+                });
+            }
+
+            if (yaExiste) {
+                alert("¡Error de sistema! Ya estabas registrado o tienes una solicitud previa para este torneo exacto.");
+                document.getElementById('enroll-loading').style.display = 'none';
+                document.getElementById('btn-confirm-enroll').disabled = false;
+                return;
+            }
+            
             // Guardar directamente en Realtime Database
             push(solicitudesRef, {
                 torneo: torneoName,
@@ -320,9 +337,9 @@ window.renderTorneos = function() {
             let yaInscrito = false;
             let solicitudPendiente = false;
             
-            if (currentUser && solicitudesData) {
-                Object.values(solicitudesData).forEach(s => {
-                    if (s.uid === currentUser.uid && s.torneo === (t.nombre || '')) {
+            if (currentUser && window.solicitudesDataGlobal) {
+                Object.values(window.solicitudesDataGlobal).forEach(s => {
+                    if (s.uid === currentUser.uid && (s.torneo || '').toLowerCase() === (t.nombre || '').toLowerCase()) {
                         if (s.estado === 'aceptada') yaInscrito = true;
                         if (s.estado === 'pendiente') solicitudPendiente = true;
                     }
@@ -363,11 +380,12 @@ window.renderTorneos = function() {
     }
 };
 
-let solicitudesData = null;
+window.torneosDataGlobal = null;
+window.solicitudesDataGlobal = null;
 
 // Cargar Solicitudes
 onValue(solicitudesRef, (snapshot) => {
-    solicitudesData = snapshot.val();
+    window.solicitudesDataGlobal = snapshot.val();
     if (window.isAdmin && window.renderSolicitudes) {
         window.renderSolicitudes();
     }
@@ -384,9 +402,9 @@ window.renderMisSolicitudes = function() {
     if(!sBox) return;
     sBox.innerHTML = "";
     
-    if (solicitudesData && currentUser) {
+    if (window.solicitudesDataGlobal && currentUser) {
         let empty = true;
-        Object.entries(solicitudesData).reverse().forEach(([key, s]) => {
+        Object.entries(window.solicitudesDataGlobal).reverse().forEach(([key, s]) => {
             if (s.uid === currentUser.uid) {
                 empty = false;
                 const dv = document.createElement('div');
@@ -434,7 +452,7 @@ window.aceptarSolicitud = function(reqKey, torneoName) {
             let foundTournamentId = null;
             let currentInscritos = 0;
             Object.entries(torneosData).forEach(([key, t]) => {
-                if (t.nombre === torneoName) {
+                if ((t.nombre || '').toLowerCase() === (torneoName || '').toLowerCase()) {
                     foundTournamentId = key;
                     currentInscritos = t.inscritos || 0;
                 }
@@ -459,9 +477,9 @@ window.renderSolicitudes = function() {
     if(!sBox) return;
     sBox.innerHTML = "";
 
-    if (solicitudesData) {
+    if (window.solicitudesDataGlobal) {
         let empty = true;
-        Object.entries(solicitudesData).reverse().forEach(([key, s]) => {
+        Object.entries(window.solicitudesDataGlobal).reverse().forEach(([key, s]) => {
             if (s.estado === 'pendiente') {
                 empty = false;
                 const dv = document.createElement('div');
