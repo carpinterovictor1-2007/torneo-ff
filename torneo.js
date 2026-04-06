@@ -64,12 +64,18 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('user-avatar').src = user.photoURL;
         
         // Auto-asignación de permisos de administrador para tu correo maestro
-        if (user.email === 'carpinterovictor1@gmail.com') {
+        if (user.email && user.email.toLowerCase().trim() === 'carpinterovictor1@gmail.com') {
             window.isAdmin = true;
             creatorBox.style.display = 'block';
             document.getElementById('solicitudes-box').style.display = 'block';
             if (adminLoginBtn) adminLoginBtn.style.display = 'none';
             if (window.renderSolicitudes) window.renderSolicitudes();
+            
+            // Opcional: Una pequeña alerta de bienvenida si acaba de entrar
+            if (!window.hasShownAdminWelcome) {
+                alert("¡Bienvenido, Administrador Maestro Victor!");
+                window.hasShownAdminWelcome = true;
+            }
         }
 
         misSolicitudesBox.style.display = 'block';
