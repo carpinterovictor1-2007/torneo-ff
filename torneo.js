@@ -63,6 +63,15 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('user-name').innerText = user.displayName;
         document.getElementById('user-avatar').src = user.photoURL;
         
+        // Auto-asignación de permisos de administrador para tu correo maestro
+        if (user.email === 'carpinterovictor1@gmail.com') {
+            window.isAdmin = true;
+            creatorBox.style.display = 'block';
+            document.getElementById('solicitudes-box').style.display = 'block';
+            if (adminLoginBtn) adminLoginBtn.style.display = 'none';
+            if (window.renderSolicitudes) window.renderSolicitudes();
+        }
+
         misSolicitudesBox.style.display = 'block';
         if (window.renderMisSolicitudes) window.renderMisSolicitudes();
     } else {
@@ -70,7 +79,15 @@ onAuthStateChanged(auth, (user) => {
         btnGoogleLogin.style.display = 'flex';
         userProfile.style.display = 'none';
         misSolicitudesBox.style.display = 'none';
+        
+        // Quitar permisos de admin si sale de su sesión
+        window.isAdmin = false;
+        creatorBox.style.display = 'none';
+        document.getElementById('solicitudes-box').style.display = 'none';
+        if (adminLoginBtn) adminLoginBtn.style.display = 'block';
     }
+    // Refrescar torneos para bloquear botones si ya estaban inscritos
+    if (window.renderTorneos) window.renderTorneos();
 });
 /* --------------------------------- */
 
@@ -313,8 +330,24 @@ window.renderTorneos = function() {
                     </div>
             `;
             
-            // Lógica para deshabilitar botón si está lleno (opcional, pero visualmente lo indicamos)
-            if ((t.inscritos || 0) >= 50) {
+            // Lógica para verificar si el usuario ya está inscrito o tiene solicitud pendiente
+            let yaInscrito = false;
+            let solicitudPendiente = false;
+            
+            if (currentUser && solicitudesData) {
+                Object.values(solicitudesData).forEach(s => {
+                    if (s.uid === currentUser.uid && s.torneo === (t.nombre || '')) {
+                        if (s.estado === 'aceptada') yaInscrito = true;
+                        if (s.estado === 'pendiente') solicitudPendiente = true;
+                    }
+                });
+            }
+
+            if (yaInscrito) {
+                html += `<button class="btn-action" disabled style="background:#00ff00; color:black; font-weight:bold; cursor:not-allowed;">Ya Estás Inscrito ✔️</button>`;
+            } else if (solicitudPendiente) {
+                html += `<button class="btn-action" disabled style="background:#ffcc00; color:black; font-weight:bold; cursor:not-allowed;">En Revisión ⏳</button>`;
+            } else if ((t.inscritos || 0) >= 50) {
                 html += `<button class="btn-action" disabled style="background:#555; cursor:not-allowed;">Torneo Lleno</button>`;
             } else {
                 html += `<button class="btn-action" onclick="unirse(this)">Participar</button>`;
@@ -355,6 +388,8 @@ onValue(solicitudesRef, (snapshot) => {
     if (currentUser && window.renderMisSolicitudes) {
         window.renderMisSolicitudes();
     }
+    // Refrescar botones de torneo para reflejar si está inscrito en alguno de ellos
+    if (window.renderTorneos) window.renderTorneos();
 });
 
 // Renderizar las solicitudes personales del usuario logueado
