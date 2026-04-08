@@ -790,6 +790,42 @@ select option {
     color: #ffdd44 !important;
 }
 
+/* Botón eliminar mensaje (solo admin) */
+.chat-delete-btn {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    background: rgba(255, 70, 85, 0.1);
+    border: 1px solid rgba(255, 70, 85, 0.25);
+    color: var(--primary-red);
+    font-size: 0.85rem;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s, transform 0.2s;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.chat-msg:hover .chat-delete-btn {
+    opacity: 1;
+}
+
+.chat-delete-btn:hover {
+    background: var(--primary-red);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 70, 85, 0.4);
+}
+
+
 /* Chat input area */
 #chat-input {
     border-radius: 8px !important;
