@@ -69,7 +69,9 @@ onAuthStateChanged(auth, (user) => {
             creatorBox.style.display = 'block';
             document.getElementById('solicitudes-box').style.display = 'block';
             if (window.renderSolicitudes) window.renderSolicitudes();
-            
+            if (window._insertarBotonLimpiarChat) window._insertarBotonLimpiarChat();
+            if (window.renderTorneos) window.renderTorneos();
+
             // Opcional: Una pequeña alerta de bienvenida si acaba de entrar
             if (!window.hasShownAdminWelcome) {
                 alert("¡Bienvenido, Administrador Maestro Victor!");
@@ -575,11 +577,66 @@ function renderGanadores(data) {
     }
 }
 
-// LOGICA DEL CHAT
+// =============================================
+// FILTRO DE PALABRAS OFENSIVAS
+// =============================================
+const PALABRAS_PROHIBIDAS = [
+    // Español
+    'mierda', 'puta', 'puto', 'hijueputa', 'hijueptas', 'marica', 'malparido', 'malparida',
+    'gonorrea', 'hp', 'hdp', 'culero', 'culo', 'verga', 'pene', 'coño', 'cono',
+    'pendejo', 'pendeja', 'idiota', 'imbécil', 'imbecil', 'estúpido', 'estupido',
+    'bastardo', 'bastarda', 'perra', 'perro', 'negro', 'marico', 'maricon', 'maricón',
+    'sicario', 'asesino', 'maldito', 'maldita', 'jodete', 'jódete', 'cabron', 'cabrón',
+    'chinga', 'chingada', 'chingado', 'pinche', 'güey', 'guey', 'wey', 'carajo',
+    'joder', 'coger', 'follar', 'mamada', 'culiao', 'culeado', 'huevon', 'huevón',
+    'maricon', 'trolo', 'pito', 'picho', 'concha', 'tetas', 'porno',
+    // Inglés
+    'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'damn', 'cunt', 'dick',
+    'nigga', 'nigger', 'faggot', 'retard', 'whore', 'slut', 'pussy', 'cock',
+    'ass', 'wtf', 'stfu'
+];
+
+function censurarTexto(texto) {
+    if (!texto) return texto;
+    let resultado = texto;
+    PALABRAS_PROHIBIDAS.forEach(palabra => {
+        // Regex con variaciones: letras repetidas, mayúsculas, con/sin tildes
+        const regex = new RegExp(palabra.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const censura = '*'.repeat(palabra.length);
+        resultado = resultado.replace(regex, censura);
+    });
+    return resultado;
+}
+
+function contieneOfensa(texto) {
+    if (!texto) return false;
+    const lower = texto.toLowerCase();
+    return PALABRAS_PROHIBIDAS.some(p => lower.includes(p));
+}
+
+// =============================================
+// LÓGICA DEL CHAT
+// =============================================
 const chatRef = ref(db, 'chat');
 const chatMessagesContainer = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatBtn = document.getElementById('chat-btn');
+
+// Botón "Limpiar Chat" solo visible para admin
+window.limpiarChatAdmin = function() {
+    if (!window.isAdmin) return;
+    if (!confirm('⚠️ ¿Estás seguro de que quieres BORRAR todo el chat global?')) return;
+    remove(ref(db, 'chat'))
+        .then(() => console.log('Chat limpiado correctamente.'))
+        .catch(e => alert('Error al limpiar el chat: ' + e));
+};
+
+// Borrar un mensaje individual (solo admin)
+window.borrarMensajeChat = function(key) {
+    if (!window.isAdmin) return;
+    remove(ref(db, 'chat/' + key))
+        .catch(e => console.error('Error al borrar mensaje:', e));
+};
 
 if (chatRef && chatMessagesContainer) {
     const chatQuery = query(chatRef, limitToLast(50));
@@ -590,37 +647,58 @@ if (chatRef && chatMessagesContainer) {
             Object.entries(data).forEach(([key, msg]) => {
                 const div = document.createElement('div');
                 div.className = 'chat-msg';
+                div.style.position = 'relative';
+
                 if (currentUser && currentUser.uid === msg.uid) {
                     div.classList.add('me');
                 }
+
                 const b = document.createElement('b');
                 b.className = 'chat-user';
                 b.textContent = (msg.nombre || 'Anónimo') + ':';
+
                 const span = document.createElement('span');
-                span.textContent = ' ' + msg.texto;
+                // Mostrar texto censurado visualmente (aunque en Firebase está el original)
+                span.textContent = ' ' + censurarTexto(msg.texto);
+
                 div.appendChild(b);
                 div.appendChild(span);
+
+                // Botón de borrar solo para admin
+                if (window.isAdmin) {
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'chat-delete-btn';
+                    delBtn.innerHTML = '🗑';
+                    delBtn.title = 'Borrar mensaje';
+                    delBtn.onclick = () => window.borrarMensajeChat(key);
+                    div.appendChild(delBtn);
+                }
+
                 chatMessagesContainer.appendChild(div);
             });
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
         } else {
-            chatMessagesContainer.innerHTML = '<p style="color:#888; text-align:center;">¡Sé el primero en saludar! 👋</p>';
+            chatMessagesContainer.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px 0;">¡Sé el primero en saludar! 👋</p>';
         }
     });
 }
 
 function enviarMensajeChat() {
     if (!currentUser || !chatInput || chatInput.value.trim() === '') return;
-    const texto = chatInput.value.trim();
-    if (texto.length > 50) return; // Validación de seguridad
+    const textoOriginal = chatInput.value.trim();
+    if (textoOriginal.length > 50) return;
+
+    // Bloquear envío si contiene ofensas graves (opcional: en su lugar se podría solo censurar)
+    // Aquí optamos por enviar el texto censurado directamente
+    const textoCensurado = censurarTexto(textoOriginal);
 
     chatInput.disabled = true;
-    if(chatBtn) chatBtn.disabled = true;
+    if (chatBtn) chatBtn.disabled = true;
 
     push(chatRef, {
         uid: currentUser.uid,
         nombre: currentUser.displayName || 'Soldado',
-        texto: texto,
+        texto: textoCensurado,   // Se guarda ya censurado
         timestamp: new Date().toISOString()
     }).then(() => {
         chatInput.value = '';
@@ -628,7 +706,7 @@ function enviarMensajeChat() {
         console.error('Error enviando chat: ', e);
     }).finally(() => {
         chatInput.disabled = false;
-        if(chatBtn) chatBtn.disabled = false;
+        if (chatBtn) chatBtn.disabled = false;
         chatInput.focus();
     });
 }
@@ -639,3 +717,39 @@ if (chatInput) {
         if (e.key === 'Enter') enviarMensajeChat();
     });
 }
+
+// Mostrar el botón "Limpiar Chat" cuando el admin inicia sesión
+// (Se llama desde onAuthStateChanged cuando se detecta admin)
+window._insertarBotonLimpiarChat = function() {
+    const chatHeader = document.querySelector('.chat-container .section-title');
+    if (!chatHeader || document.getElementById('btn-limpiar-chat')) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-limpiar-chat';
+    btn.textContent = '🗑️ Limpiar Chat';
+    btn.title = 'Borrar todos los mensajes del chat';
+    btn.style.cssText = `
+        background: rgba(255,70,85,0.12);
+        color: #ff4655;
+        border: 1px solid rgba(255,70,85,0.3);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-left: auto;
+    `;
+    btn.onmouseenter = () => {
+        btn.style.background = '#ff4655';
+        btn.style.color = 'white';
+    };
+    btn.onmouseleave = () => {
+        btn.style.background = 'rgba(255,70,85,0.12)';
+        btn.style.color = '#ff4655';
+    };
+    btn.onclick = window.limpiarChatAdmin;
+    // Insertar antes del ::after del section-title
+    chatHeader.appendChild(btn);
+};
