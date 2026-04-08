@@ -59,7 +59,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
         btnGoogleLogin.style.display = 'none';
-        userProfile.style.display = 'flex';
+        userProfile.className = 'user-profile-visible';
         document.getElementById('user-name').innerText = user.displayName;
         document.getElementById('user-avatar').src = user.photoURL;
         
@@ -72,7 +72,6 @@ onAuthStateChanged(auth, (user) => {
             if (window._insertarBotonLimpiarChat) window._insertarBotonLimpiarChat();
             if (window.renderTorneos) window.renderTorneos();
 
-            // Opcional: Una pequeña alerta de bienvenida si acaba de entrar
             if (!window.hasShownAdminWelcome) {
                 alert("¡Bienvenido, Administrador Maestro Victor!");
                 window.hasShownAdminWelcome = true;
@@ -87,12 +86,12 @@ onAuthStateChanged(auth, (user) => {
         if (chatInp && chatBt) {
             chatInp.disabled = false;
             chatBt.disabled = false;
-            chatInp.placeholder = "Escribe un mensaje... (Max 50 char)";
+            chatInp.placeholder = "Escribe un mensaje... (Máx 50 caract.)";
         }
     } else {
         currentUser = null;
-        btnGoogleLogin.style.display = 'flex';
-        userProfile.style.display = 'none';
+        btnGoogleLogin.style.display = '';
+        userProfile.className = 'user-profile-hidden';
         misSolicitudesBox.style.display = 'none';
         
         // Quitar permisos de admin si sale de su sesión
@@ -100,12 +99,16 @@ onAuthStateChanged(auth, (user) => {
         creatorBox.style.display = 'none';
         document.getElementById('solicitudes-box').style.display = 'none';
 
+        // Quitar botón limpiar chat si existe
+        const btnLimpiar = document.getElementById('btn-limpiar-chat');
+        if (btnLimpiar) btnLimpiar.remove();
+
         const chatInp = document.getElementById('chat-input');
         const chatBt = document.getElementById('chat-btn');
         if (chatInp && chatBt) {
             chatInp.disabled = true;
             chatBt.disabled = true;
-            chatInp.placeholder = "Inicia sesión para escribir... (Max 50 char)";
+            chatInp.placeholder = "Inicia sesión para escribir... (Máx 50 caract.)";
         }
     }
     // Refrescar torneos para bloquear botones si ya estaban inscritos
