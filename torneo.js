@@ -318,42 +318,59 @@ window.renderTorneos = function() {
     const lista = document.getElementById('tournament-list');
     if (!lista) return;
     
-    lista.innerHTML = ""; // Limpiar lista
+    lista.innerHTML = "";
     if (torneosData) {
-        // Mostrar últimos torneos primero
         Object.entries(torneosData).reverse().forEach(([key, t]) => {
             const card = document.createElement('div');
             card.className = 'tournament-card';
-            
+
             // Formatear la fecha si existe
             let fechaStr = "Por anunciar";
             if (t.fechaTorneo) {
                 const f = new Date(t.fechaTorneo);
-                fechaStr = f.toLocaleDateString() + ' ' + f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                fechaStr = f.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                           ' · ' + f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
 
+            // Elegir ícono de mapa
+            const mapIcons = { 'Bermuda': '🏝️', 'Purgatorio': '🌋', 'Kalahari': '🏜️', 'Alpes': '🏔️' };
+            const mapIcon = mapIcons[t.mapa] || '🗺️';
+            const modeIcons = { 'Clásico': '🎯', 'Duelo de Escuadras': '⚔️', 'Lobo Solitario': '🐺' };
+            const modeIcon = modeIcons[t.modo] || '🎮';
+            const formatIcons = { 'Solo': '👤', 'Dúo': '👥', 'Escuadra': '👪' };
+            const formatIcon = formatIcons[t.formato] || '👥';
+
+            // Calcular porcentaje de cupos
+            const cupos = t.inscritos || 0;
+            const maxCupos = 50;
+            const pct = Math.round((cupos / maxCupos) * 100);
+            const cuposColor = pct >= 80 ? '#ff4655' : pct >= 50 ? '#ffcc00' : '#00e676';
+
             let html = `
-                <div class="status-badge" style="background: #ffcc00">ACTIVO</div>
-                <div class="card-header" style="background: linear-gradient(45deg, #1f2933, #ff4655)">
-                    ${(t.nombre || 'TORN').substring(0, 4).toUpperCase()}
+                <div class="status-badge">ACTIVO</div>
+                <div class="card-header">
+                    <div class="card-header-icon">${modeIcon}</div>
+                    <div class="card-header-text">${(t.nombre || 'TORN').substring(0, 4).toUpperCase()}</div>
                 </div>
                 <div class="card-body">
                     <h3>${(t.nombre || '').toUpperCase()}</h3>
                     <div class="card-info">
-                        <span>🗓️ FECHA: ${fechaStr}</span>
-                        <span>🎮 MODO: ${(t.modo || 'Clásico').toUpperCase()}</span>
-                        <span>👥 FORMATO: ${(t.formato || 'Solo').toUpperCase()}</span>
-                        <span>🗺️ MAPA: ${(t.mapa || 'Cualquiera').toUpperCase()}</span>
-                        <span>🏆 PREMIO: ${t.premio || 'Sorpresa'}</span>
-                        <span>💲 INSCRIPCIÓN: ${t.inscripcion || 'Gratis'}</span>
-                        <span style="color: #00ff00; font-weight: bold; font-size: 1rem; margin-top: 5px;">🔥 CUPOS: ${t.inscritos || 0} / 50</span>
+                        <span>🗓️ <strong>Fecha:</strong> ${fechaStr}</span>
+                        <span>${modeIcon} <strong>Modo:</strong> ${t.modo || 'Clásico'}</span>
+                        <span>${formatIcon} <strong>Formato:</strong> ${t.formato || 'Solo'}</span>
+                        <span>${mapIcon} <strong>Mapa:</strong> ${t.mapa || 'Cualquiera'}</span>
+                        <span>🏆 <strong>Premio:</strong> ${t.premio || 'Sorpresa'}</span>
+                        <span>💲 <strong>Inscripción:</strong> ${t.inscripcion || 'Gratis'}</span>
+                        <span class="highlight-stat" style="color:${cuposColor};">🔥 Cupos: ${cupos} / ${maxCupos}</span>
+                    </div>
+                    <div style="margin-top:10px;height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+                        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${cuposColor},${cuposColor}88);border-radius:4px;transition:width 0.5s ease;"></div>
                     </div>
             `;
-            
-            // Lógica para verificar si el usuario ya está inscrito o tiene solicitud pendiente
+
+            // Verificar si el usuario ya está inscrito o tiene solicitud pendiente
             let yaInscrito = false;
             let solicitudPendiente = false;
-            
             if (currentUser && window.solicitudesDataGlobal) {
                 Object.values(window.solicitudesDataGlobal).forEach(s => {
                     if (s.uid === currentUser.uid && (s.torneo || '').toLowerCase() === (t.nombre || '').toLowerCase()) {
@@ -364,27 +381,26 @@ window.renderTorneos = function() {
             }
 
             if (yaInscrito) {
-                html += `<button class="btn-action" disabled style="background:#00ff00; color:black; font-weight:bold; cursor:not-allowed;">Ya Estás Inscrito ✔️</button>`;
+                html += `<button class="btn-action" disabled style="background:rgba(0,230,118,0.15);color:#00e676;border:1px solid rgba(0,230,118,0.3);font-weight:700;cursor:not-allowed;letter-spacing:1px;">✔️ Ya Estás Inscrito</button>`;
             } else if (solicitudPendiente) {
-                html += `<button class="btn-action" disabled style="background:#ffcc00; color:black; font-weight:bold; cursor:not-allowed;">En Revisión ⏳</button>`;
-            } else if ((t.inscritos || 0) >= 50) {
-                html += `<button class="btn-action" disabled style="background:#555; cursor:not-allowed;">Torneo Lleno</button>`;
+                html += `<button class="btn-action" disabled style="background:rgba(255,204,0,0.12);color:#ffcc00;border:1px solid rgba(255,204,0,0.3);font-weight:700;cursor:not-allowed;letter-spacing:1px;">⏳ En Revisión</button>`;
+            } else if (cupos >= maxCupos) {
+                html += `<button class="btn-action" disabled style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);cursor:not-allowed;letter-spacing:1px;">🔒 Torneo Lleno</button>`;
             } else {
-                html += `<button class="btn-action" onclick="unirse(this)">Participar</button>`;
+                html += `<button class="btn-action" onclick="unirse(this)">⚔️ Participar Ahora</button>`;
             }
 
-            // Si es admin, agregar panel de control
+            // Panel de control para admin
             if (window.isAdmin) {
                 html += `
-                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.5); border: 1px solid #ffcc00; border-radius: 5px;">
-                        <label style="color:#ffcc00; font-size:0.8rem; display:block; margin-bottom:5px;">Actualizar Inscritos (Max 50):</label>
-                        <div style="display:flex; gap:5px;">
-                            <input type="number" id="inp-count-${key}" value="${t.inscritos || 0}" max="50" min="0" style="width: 60px; padding: 5px; background: #222; color: white; border: 1px solid #444;">
-                            <button onclick="actualizarInscritos('${key}')" style="background:#00ff00; color:black; border:none; padding:5px; cursor:pointer; font-weight:bold; flex-grow:1;">Guardar Cupos</button>
+                    <div style="margin-top:18px;padding:14px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,204,0,0.2);border-radius:10px;">
+                        <label style="color:#ffcc00;font-size:0.72rem;display:block;margin-bottom:8px;letter-spacing:2px;font-weight:700;">PANEL ADMIN — CUPOS</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="number" id="inp-count-${key}" value="${cupos}" max="50" min="0" style="width:70px;padding:8px;background:rgba(0,0,0,0.5);color:white;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-family:'Outfit',sans-serif;">
+                            <button onclick="actualizarInscritos('${key}')" style="background:linear-gradient(135deg,#00c853,#00a040);color:#000;border:none;padding:8px 12px;cursor:pointer;font-weight:700;font-family:'Outfit',sans-serif;font-size:0.8rem;border-radius:6px;flex-grow:1;letter-spacing:0.5px;transition:opacity 0.2s;">Guardar Cupos</button>
                         </div>
-                        <button class="btn-action" onclick="borrarTorneo('${key}')" 
-                                style="background: #ff4655; width: 100%; margin-top: 10px; padding: 8px;">
-                            Eliminar Torneo
+                        <button class="btn-action" onclick="borrarTorneo('${key}')" style="background:rgba(255,70,85,0.15);color:#ff4655;border:1px solid rgba(255,70,85,0.3);width:100%;margin-top:10px;">
+                            🗑️ Eliminar Torneo
                         </button>
                     </div>
                 `;
@@ -394,6 +410,8 @@ window.renderTorneos = function() {
             card.innerHTML = html;
             lista.appendChild(card);
         });
+    } else {
+        lista.innerHTML = `<p style='color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px 0;font-size:1rem;'>No hay torneos activos en este momento. ¡Vuelve pronto! ⚔️</p>`;
     }
 };
 
